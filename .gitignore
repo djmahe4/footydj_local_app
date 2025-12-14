@@ -130,7 +130,9 @@ models.zip
 
 # Python source files
 *.py
+# Other files
 gemini.md
+*.mp4
 
 # Encrypted models
 app/encrypted_models/
