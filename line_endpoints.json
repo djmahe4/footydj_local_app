@@ -1,0 +1,30 @@
+{
+  "(Middle line, Side line top)": [52.5, 68.0],
+  "(Middle line, Side line bottom)": [52.5, 0.0],
+
+  "(Side line left, Side line top)": [0.0, 68.0],
+  "(Side line left, Side line bottom)": [0.0, 0.0],
+  "(Side line right, Side line top)": [105.0, 68.0],
+  "(Side line right, Side line bottom)": [105.0, 0.0],
+
+  "(Side line left, Big rect. left top)": [0.0, 54.15],
+  "(Side line left, Big rect. left bottom)": [0.0, 13.85],
+  "(Side line right, Big rect. right top)": [105.0, 54.15],
+  "(Side line right, Big rect. right bottom)": [105.0, 13.85],
+
+  "(Big rect. left top, Big rect. left main)": [16.5, 54.15],
+  "(Big rect. left bottom, Big rect. left main)": [16.5, 13.85],
+  "(Big rect. right top, Big rect. right main)": [88.5, 54.15],
+  "(Big rect. right bottom, Big rect. right main)": [88.5, 13.85],
+
+  "(Side line left, Small rect. left top)": [0.0, 43.16],
+  "(Side line left, Small rect. left bottom)": [0.0, 24.84],
+  "(Small rect. left top, Small rect. left main)": [5.5, 43.16],
+  "(Small rect. left bottom, Small rect. left main)": [5.5, 24.84],
+
+  "(Side line right, Small rect. right top)": [105.0, 43.16],
+  "(Side line right, Small rect. right bottom)": [105.0, 24.84],
+  "(Small rect. right top, Small rect. right main)": [99.5, 43.16],
+  "(Small rect. right bottom, Small rect. right main)": [99.5, 24.84]
+  
+}

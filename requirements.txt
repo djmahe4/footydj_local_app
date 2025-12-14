@@ -1,0 +1,30 @@
+fastapi
+uvicorn[standard]
+python-multipart 
+gdown
+# For serving static files and handling uploads
+
+pywebview
+# For the desktop window wrapper
+
+requests
+# For contacting the license server
+
+Cython
+numpy
+# For building the protected modules and model scrambling
+
+# NOTE: The footydj5 dependencies (torch, supervision, etc.)
+# are also required and should be added here.
+# For example:
+# torch
+# torchvision
+# supervision
+# opencv-python
+# scikit-learn
+# scikit-image
+# pytesseract
+# diskcache
+# icecream
+# shapely
+# ultralytics
