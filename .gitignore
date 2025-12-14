@@ -127,3 +127,10 @@ models.zip
 
 # PyCharm
 .idea/
+
+# Python source files
+*.py
+gemini.md
+
+# Encrypted models
+app/encrypted_models/
