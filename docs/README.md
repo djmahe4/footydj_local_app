@@ -261,7 +261,7 @@ footydj_local_app/
 
 Need help?
 
-- **Email**: support@footydj.com
+- **Email**: maheshwaranup@gmail.com
 - **Documentation**: Read the guides in this folder
 - **GitHub**: Report issues at github.com/djmahe4/footydj_local_app
 
@@ -272,6 +272,6 @@ This software requires a valid license key to operate. Contact FootyDJ for licen
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: December 2024
+**Last Updated**: December 2025
 
 **Happy Analyzing! ⚽**
