@@ -1,30 +1,34 @@
-fastapi
-uvicorn[standard]
-python-multipart 
-gdown
-# For serving static files and handling uploads
+# Web Server and API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
 
-pywebview
-# For the desktop window wrapper
+# Desktop Window Wrapper
+pywebview>=4.0.0
 
-requests
-# For contacting the license server
+# License Validation
+requests>=2.31.0
 
-Cython
-numpy
-# For building the protected modules and model scrambling
+# Video Processing (Required for workflow.py)
+opencv-python>=4.8.0
+numpy>=1.24.0
 
-# NOTE: The footydj5 dependencies (torch, supervision, etc.)
-# are also required and should be added here.
-# For example:
-# torch
-# torchvision
-# supervision
-# opencv-python
-# scikit-learn
-# scikit-image
-# pytesseract
-# diskcache
-# icecream
-# shapely
-# ultralytics
+# File Download
+gdown>=4.7.0
+
+# Build Tools
+Cython>=3.0.0
+
+# NOTE: The following footydj5 dependencies are required for actual analysis
+# with compiled modules. They are optional for the workflow demonstration mode.
+# Uncomment if you need actual YOLO-based detection:
+# torch>=2.0.0
+# torchvision>=0.15.0
+# ultralytics>=8.0.0
+# supervision>=0.16.0
+# scikit-learn>=1.3.0
+# scikit-image>=0.21.0
+# pytesseract>=0.3.10
+# diskcache>=5.6.0
+# icecream>=2.1.0
+# shapely>=2.0.0

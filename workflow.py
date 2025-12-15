@@ -31,23 +31,34 @@ def generate_annotated_video(input_path, output_path, results):
     """
     print(f"  ✓ Generating annotated output video...")
     
-    # Open input video
-    cap = cv2.VideoCapture(str(input_path))
-    if not cap.isOpened():
-        raise Exception(f"Could not open video: {input_path}")
+    # Visualization constants
+    PLAYER_BOX_WIDTH = 60
+    PLAYER_BOX_HEIGHT = 100
+    BALL_RADIUS_INNER = 15
+    BALL_RADIUS_OUTER = 20
+    UPDATE_INTERVAL_FRAMES = 30
     
-    # Get video properties
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap = None
+    out = None
     
-    # Create video writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
-    
-    if not out.isOpened():
-        raise Exception(f"Could not create output video: {output_path}")
+    try:
+        # Open input video
+        cap = cv2.VideoCapture(str(input_path))
+        if not cap.isOpened():
+            raise Exception(f"Could not open video: {input_path}")
+        
+        # Get video properties
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        # Create video writer with H.264 codec for better compatibility
+        fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 codec
+        out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+        
+        if not out.isOpened():
+            raise Exception(f"Could not create output video: {output_path}")
     
     # Get analysis results
     analysis = results.get('analysis_results', {})
@@ -112,12 +123,12 @@ def generate_annotated_video(input_path, output_path, results):
         
         # Simulate player positions (in real analysis, these would come from detection)
         # Draw example bounding boxes for demonstration
-        if frame_count % 30 == 0:  # Every 30 frames
+        if frame_count % UPDATE_INTERVAL_FRAMES == 0:
             # Example: Draw some player boxes
             for i in range(min(4, player_track.get('players_detected', 0))):
                 x = 100 + i * 150
                 y = height // 2 + np.random.randint(-100, 100)
-                cv2.rectangle(frame, (x, y), (x + 60, y + 100), (0, 255, 0), 2)
+                cv2.rectangle(frame, (x, y), (x + PLAYER_BOX_WIDTH, y + PLAYER_BOX_HEIGHT), (0, 255, 0), 2)
                 cv2.putText(frame, f"P{i+1}", (x, y - 10),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
             
@@ -125,8 +136,8 @@ def generate_annotated_video(input_path, output_path, results):
             if ball_track.get('ball_detected'):
                 ball_x = width // 2 + np.random.randint(-200, 200)
                 ball_y = height // 2 + np.random.randint(-100, 100)
-                cv2.circle(frame, (ball_x, ball_y), 15, (0, 0, 255), -1)
-                cv2.circle(frame, (ball_x, ball_y), 20, (255, 255, 255), 2)
+                cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_INNER, (0, 0, 255), -1)
+                cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_OUTER, (255, 255, 255), 2)
         
         # Write annotated frame
         out.write(frame)
@@ -136,12 +147,15 @@ def generate_annotated_video(input_path, output_path, results):
             progress = (frame_count / total_frames) * 100
             print(f"  ℹ️  Progress: {progress:.1f}% ({frame_count}/{total_frames} frames)")
     
-    # Release resources
-    cap.release()
-    out.release()
+        print(f"  ✅ Annotated video created: {output_path.name}")
+        return output_path
     
-    print(f"  ✅ Annotated video created: {output_path.name}")
-    return output_path
+    finally:
+        # Ensure resources are always released
+        if cap is not None:
+            cap.release()
+        if out is not None:
+            out.release()
 
 
 def find_video_files(directory):
@@ -349,10 +363,15 @@ def analyze_video_real(video_path, output_dir):
         
         # Create a simple CSV tracking file
         csv_file = output_dir / f"{video_path.stem}_tracking.csv"
+        SAMPLE_FRAMES = 10
+        FRAME_INTERVAL = 30
+        players_count = results['analysis_results']['player_tracking'].get('players_detected', 22)
+        ball_detected = 1 if results['analysis_results']['ball_tracking'].get('ball_detected', True) else 0
+        
         with open(csv_file, 'w') as f:
             f.write("frame,timestamp,players_detected,ball_detected\n")
-            for i in range(10):  # Sample data
-                f.write(f"{i*30},{i*1.0},{22},{1}\n")
+            for i in range(SAMPLE_FRAMES):
+                f.write(f"{i*FRAME_INTERVAL},{i*1.0},{players_count},{ball_detected}\n")
         print(f"  📁 Tracking data saved to: {csv_file}")
         
         return results
