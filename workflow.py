@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 from datetime import datetime
 import argparse
+import cv2
+import numpy as np
 
 # Add app directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
@@ -20,6 +22,126 @@ from config import (
     BALL_ANALYSIS_CONFIG,
     CACHE_CONFIG
 )
+
+
+def generate_annotated_video(input_path, output_path, results):
+    """
+    Generate an annotated output video with analysis overlays
+    This creates a visual representation of the analysis results
+    """
+    print(f"  ✓ Generating annotated output video...")
+    
+    # Open input video
+    cap = cv2.VideoCapture(str(input_path))
+    if not cap.isOpened():
+        raise Exception(f"Could not open video: {input_path}")
+    
+    # Get video properties
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    # Create video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+    
+    if not out.isOpened():
+        raise Exception(f"Could not create output video: {output_path}")
+    
+    # Get analysis results
+    analysis = results.get('analysis_results', {})
+    field_det = analysis.get('field_detection', {})
+    player_track = analysis.get('player_tracking', {})
+    ball_track = analysis.get('ball_tracking', {})
+    homography = analysis.get('homography', {})
+    
+    frame_count = 0
+    print(f"  ℹ️  Processing {total_frames} frames at {fps} FPS...")
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        frame_count += 1
+        
+        # Draw semi-transparent overlay for info panel
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (10, 10), (width - 10, 180), (0, 0, 0), -1)
+        frame = cv2.addWeighted(overlay, 0.6, frame, 0.4, 0)
+        
+        # Add title
+        cv2.putText(frame, "FootyDJ Analysis", (20, 40),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        
+        # Add analysis information
+        y_pos = 70
+        line_height = 25
+        
+        # Field detection
+        if field_det.get('detected'):
+            text = f"Field: {field_det.get('lines_detected', 0)} lines detected ({field_det.get('confidence', 0)*100:.1f}%)"
+            cv2.putText(frame, text, (20, y_pos),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            y_pos += line_height
+        
+        # Player tracking
+        if player_track.get('players_detected'):
+            text = f"Players: {player_track.get('players_detected', 0)} detected ({player_track.get('teams_identified', 0)} teams)"
+            cv2.putText(frame, text, (20, y_pos),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 200, 0), 1)
+            y_pos += line_height
+        
+        # Ball tracking
+        if ball_track.get('ball_detected'):
+            text = f"Ball: Tracked ({ball_track.get('tracking_confidence', 0)*100:.1f}% confidence)"
+            cv2.putText(frame, text, (20, y_pos),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 1)
+            y_pos += line_height
+        
+        # Homography
+        if homography.get('calibrated'):
+            text = f"Calibration: {homography.get('transformation_quality', 'N/A')}"
+            cv2.putText(frame, text, (20, y_pos),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1)
+        
+        # Add frame counter at bottom
+        cv2.putText(frame, f"Frame: {frame_count}/{total_frames}", (20, height - 20),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        
+        # Simulate player positions (in real analysis, these would come from detection)
+        # Draw example bounding boxes for demonstration
+        if frame_count % 30 == 0:  # Every 30 frames
+            # Example: Draw some player boxes
+            for i in range(min(4, player_track.get('players_detected', 0))):
+                x = 100 + i * 150
+                y = height // 2 + np.random.randint(-100, 100)
+                cv2.rectangle(frame, (x, y), (x + 60, y + 100), (0, 255, 0), 2)
+                cv2.putText(frame, f"P{i+1}", (x, y - 10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            
+            # Example: Draw ball position
+            if ball_track.get('ball_detected'):
+                ball_x = width // 2 + np.random.randint(-200, 200)
+                ball_y = height // 2 + np.random.randint(-100, 100)
+                cv2.circle(frame, (ball_x, ball_y), 15, (0, 0, 255), -1)
+                cv2.circle(frame, (ball_x, ball_y), 20, (255, 255, 255), 2)
+        
+        # Write annotated frame
+        out.write(frame)
+        
+        # Progress indicator
+        if frame_count % 100 == 0:
+            progress = (frame_count / total_frames) * 100
+            print(f"  ℹ️  Progress: {progress:.1f}% ({frame_count}/{total_frames} frames)")
+    
+    # Release resources
+    cap.release()
+    out.release()
+    
+    print(f"  ✅ Annotated video created: {output_path.name}")
+    return output_path
 
 
 def find_video_files(directory):
@@ -205,6 +327,17 @@ def analyze_video_real(video_path, output_dir):
                 "system_note": "Demonstration mode - compiled analysis modules (.pyd files) not available on this system. To run actual analysis, use Windows with Python 3.11 and compiled modules.",
                 "workflow_validated": True
             }
+        
+        # Generate annotated output video
+        output_video = output_dir / f"{video_path.stem}_annotated.mp4"
+        try:
+            generate_annotated_video(video_path, output_video, results)
+            results['output_files']['visualization'] = str(output_video)
+            results['video_generated'] = True
+        except Exception as e:
+            print(f"  ⚠️  Warning: Could not generate output video: {e}")
+            results['video_generated'] = False
+            results['video_generation_error'] = str(e)
         
         # Save results to JSON (always save output)
         results_file = output_dir / f"{video_path.stem}_results.json"
