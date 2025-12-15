@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-15T13:48:57.561617",
+  "videos_processed": 1,
+  "results": [
+    {
+      "video": "1743634379_000002.mp4",
+      "status": "success",
+      "output_dir": "output_with_video/analysis_20251215_134855",
+      "results_file": "output_with_video/analysis_20251215_134855/1743634379_000002_results.json"
+    }
+  ],
+  "output_directory": "output_with_video/analysis_20251215_134855"
+}
