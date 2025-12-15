@@ -411,7 +411,7 @@ The workflow generates annotated videos with visual overlays showing analysis re
 
 **Video Specifications:**
 - Same resolution and FPS as input video
-- Format: MP4 with MPEG-4 or H.264 codec
+- Format: MP4 with automatic codec selection (MPEG-4, H.264, or XVID)
 - Size: Similar to original (slight increase due to overlays)
 
 **Visual Overlays Include:**

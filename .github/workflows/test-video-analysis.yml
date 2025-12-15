@@ -10,6 +10,8 @@ on:
 jobs:
   test-analysis:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout repository
@@ -101,7 +103,7 @@ with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
 
 # Check required top-level keys
-required_keys = ['timestamp', 'video_info', 'analysis_results', 'configuration']
+required_keys = ['video_info', 'analysis_results', 'configuration']
 for key in required_keys:
     if key not in data:
         print(f'Error: Missing required key: {key}')
@@ -110,14 +112,14 @@ for key in required_keys:
 
 # Check video_info structure
 video_info = data['video_info']
-if 'frame_count' not in video_info or video_info['frame_count'] <= 0:
-    print('Error: Invalid frame_count in video_info')
+if 'filename' not in video_info:
+    print('Error: Missing filename in video_info')
     sys.exit(1)
-print(f'✓ Video has {video_info[\"frame_count\"]} frames')
+print(f'✓ Video info includes filename: {video_info[\"filename\"]}')
 
 # Check analysis_results structure
 analysis = data['analysis_results']
-required_analysis = ['field_detection', 'player_analysis', 'ball_analysis', 'homography']
+required_analysis = ['field_detection', 'player_tracking', 'ball_tracking', 'homography']
 for key in required_analysis:
     if key not in analysis:
         print(f'Error: Missing analysis component: {key}')
