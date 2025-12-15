@@ -53,100 +53,114 @@ def generate_annotated_video(input_path, output_path, results):
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
-        # Create video writer with H.264 codec for better compatibility
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 codec
-        out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+        # Create video writer with compatible codec
+        # Try multiple codecs for better compatibility across platforms
+        codecs_to_try = [
+            ('mp4v', 'MPEG-4'),  # Most compatible
+            ('avc1', 'H.264'),    # Better quality
+            ('XVID', 'XVID'),     # Fallback
+        ]
         
-        if not out.isOpened():
-            raise Exception(f"Could not create output video: {output_path}")
-    
-    # Get analysis results
-    analysis = results.get('analysis_results', {})
-    field_det = analysis.get('field_detection', {})
-    player_track = analysis.get('player_tracking', {})
-    ball_track = analysis.get('ball_tracking', {})
-    homography = analysis.get('homography', {})
-    
-    frame_count = 0
-    print(f"  ℹ️  Processing {total_frames} frames at {fps} FPS...")
-    
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        out = None
+        for fourcc_str, codec_name in codecs_to_try:
+            fourcc = cv2.VideoWriter_fourcc(*fourcc_str)
+            out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+            if out.isOpened():
+                print(f"  ✓ Using {codec_name} codec")
+                break
+            out.release()
+            out = None
         
-        frame_count += 1
+        if out is None or not out.isOpened():
+            raise Exception(f"Could not create output video with any codec: {output_path}")
         
-        # Draw semi-transparent overlay for info panel
-        overlay = frame.copy()
-        cv2.rectangle(overlay, (10, 10), (width - 10, 180), (0, 0, 0), -1)
-        frame = cv2.addWeighted(overlay, 0.6, frame, 0.4, 0)
+        # Get analysis results
+        analysis = results.get('analysis_results', {})
+        field_det = analysis.get('field_detection', {})
+        player_track = analysis.get('player_tracking', {})
+        ball_track = analysis.get('ball_tracking', {})
+        homography = analysis.get('homography', {})
         
-        # Add title
-        cv2.putText(frame, "FootyDJ Analysis", (20, 40),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        frame_count = 0
+        print(f"  ℹ️  Processing {total_frames} frames at {fps} FPS...")
         
-        # Add analysis information
-        y_pos = 70
-        line_height = 25
-        
-        # Field detection
-        if field_det.get('detected'):
-            text = f"Field: {field_det.get('lines_detected', 0)} lines detected ({field_det.get('confidence', 0)*100:.1f}%)"
-            cv2.putText(frame, text, (20, y_pos),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-            y_pos += line_height
-        
-        # Player tracking
-        if player_track.get('players_detected'):
-            text = f"Players: {player_track.get('players_detected', 0)} detected ({player_track.get('teams_identified', 0)} teams)"
-            cv2.putText(frame, text, (20, y_pos),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 200, 0), 1)
-            y_pos += line_height
-        
-        # Ball tracking
-        if ball_track.get('ball_detected'):
-            text = f"Ball: Tracked ({ball_track.get('tracking_confidence', 0)*100:.1f}% confidence)"
-            cv2.putText(frame, text, (20, y_pos),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 1)
-            y_pos += line_height
-        
-        # Homography
-        if homography.get('calibrated'):
-            text = f"Calibration: {homography.get('transformation_quality', 'N/A')}"
-            cv2.putText(frame, text, (20, y_pos),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1)
-        
-        # Add frame counter at bottom
-        cv2.putText(frame, f"Frame: {frame_count}/{total_frames}", (20, height - 20),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        
-        # Simulate player positions (in real analysis, these would come from detection)
-        # Draw example bounding boxes for demonstration
-        if frame_count % UPDATE_INTERVAL_FRAMES == 0:
-            # Example: Draw some player boxes
-            for i in range(min(4, player_track.get('players_detected', 0))):
-                x = 100 + i * 150
-                y = height // 2 + np.random.randint(-100, 100)
-                cv2.rectangle(frame, (x, y), (x + PLAYER_BOX_WIDTH, y + PLAYER_BOX_HEIGHT), (0, 255, 0), 2)
-                cv2.putText(frame, f"P{i+1}", (x, y - 10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
             
-            # Example: Draw ball position
+            frame_count += 1
+            
+            # Draw semi-transparent overlay for info panel
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (10, 10), (width - 10, 180), (0, 0, 0), -1)
+            frame = cv2.addWeighted(overlay, 0.6, frame, 0.4, 0)
+            
+            # Add title
+            cv2.putText(frame, "FootyDJ Analysis", (20, 40),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+            
+            # Add analysis information
+            y_pos = 70
+            line_height = 25
+            
+            # Field detection
+            if field_det.get('detected'):
+                text = f"Field: {field_det.get('lines_detected', 0)} lines detected ({field_det.get('confidence', 0)*100:.1f}%)"
+                cv2.putText(frame, text, (20, y_pos),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                y_pos += line_height
+            
+            # Player tracking
+            if player_track.get('players_detected'):
+                text = f"Players: {player_track.get('players_detected', 0)} detected ({player_track.get('teams_identified', 0)} teams)"
+                cv2.putText(frame, text, (20, y_pos),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 200, 0), 1)
+                y_pos += line_height
+            
+            # Ball tracking
             if ball_track.get('ball_detected'):
-                ball_x = width // 2 + np.random.randint(-200, 200)
-                ball_y = height // 2 + np.random.randint(-100, 100)
-                cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_INNER, (0, 0, 255), -1)
-                cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_OUTER, (255, 255, 255), 2)
+                text = f"Ball: Tracked ({ball_track.get('tracking_confidence', 0)*100:.1f}% confidence)"
+                cv2.putText(frame, text, (20, y_pos),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 255), 1)
+                y_pos += line_height
+            
+            # Homography
+            if homography.get('calibrated'):
+                text = f"Calibration: {homography.get('transformation_quality', 'N/A')}"
+                cv2.putText(frame, text, (20, y_pos),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1)
+            
+            # Add frame counter at bottom
+            cv2.putText(frame, f"Frame: {frame_count}/{total_frames}", (20, height - 20),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+            # Simulate player positions (in real analysis, these would come from detection)
+            # Draw example bounding boxes for demonstration
+            if frame_count % UPDATE_INTERVAL_FRAMES == 0:
+                # Example: Draw some player boxes
+                for i in range(min(4, player_track.get('players_detected', 0))):
+                    x = 100 + i * 150
+                    y = height // 2 + np.random.randint(-100, 100)
+                    cv2.rectangle(frame, (x, y), (x + PLAYER_BOX_WIDTH, y + PLAYER_BOX_HEIGHT), (0, 255, 0), 2)
+                    cv2.putText(frame, f"P{i+1}", (x, y - 10),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                
+                # Example: Draw ball position
+                if ball_track.get('ball_detected'):
+                    ball_x = width // 2 + np.random.randint(-200, 200)
+                    ball_y = height // 2 + np.random.randint(-100, 100)
+                    cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_INNER, (0, 0, 255), -1)
+                    cv2.circle(frame, (ball_x, ball_y), BALL_RADIUS_OUTER, (255, 255, 255), 2)
+            
+            # Write annotated frame
+            out.write(frame)
+            
+            # Progress indicator
+            if frame_count % 100 == 0:
+                progress = (frame_count / total_frames) * 100
+                print(f"  ℹ️  Progress: {progress:.1f}% ({frame_count}/{total_frames} frames)")
         
-        # Write annotated frame
-        out.write(frame)
-        
-        # Progress indicator
-        if frame_count % 100 == 0:
-            progress = (frame_count / total_frames) * 100
-            print(f"  ℹ️  Progress: {progress:.1f}% ({frame_count}/{total_frames} frames)")
-    
         print(f"  ✅ Annotated video created: {output_path.name}")
         return output_path
     

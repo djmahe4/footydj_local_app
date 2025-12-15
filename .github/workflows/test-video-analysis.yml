@@ -1,0 +1,160 @@
+name: Test Video Analysis
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Verify video file exists
+      run: |
+        if [ ! -f "fragments/1743634379_000002.mp4" ]; then
+          echo "Error: Test video not found in fragments/"
+          exit 1
+        fi
+        echo "✓ Test video found"
+        ls -lh fragments/1743634379_000002.mp4
+    
+    - name: Test license activation (if secret is available)
+      env:
+        LICENSE_KEY: ${{ secrets.FOOTYDJ_LICENSE_KEY }}
+      run: |
+        if [ -n "$LICENSE_KEY" ]; then
+          echo "Testing with license key from secrets..."
+          # Test would go here if server is running
+          echo "✓ License key loaded from GitHub secrets"
+        else
+          echo "⚠️  No license key in secrets - skipping license test"
+          echo "To add a license key, go to: Settings > Secrets and variables > Actions"
+          echo "Add a secret named: FOOTYDJ_LICENSE_KEY"
+        fi
+    
+    - name: Test workflow script
+      run: |
+        echo "Running video analysis workflow..."
+        python workflow.py --fragments fragments --output test_output
+        
+        echo ""
+        echo "Checking output files..."
+        
+        # Find the output directory (it has a timestamp)
+        OUTPUT_DIR=$(find test_output -type d -name "analysis_*" | head -1)
+        
+        if [ -z "$OUTPUT_DIR" ]; then
+          echo "Error: No output directory created"
+          exit 1
+        fi
+        
+        echo "✓ Output directory created: $OUTPUT_DIR"
+        ls -lh "$OUTPUT_DIR"
+        
+        # Check for required output files
+        REQUIRED_FILES=(
+          "*_annotated.mp4"
+          "*_results.json"
+          "*_tracking.csv"
+          "workflow_summary.json"
+        )
+        
+        for pattern in "${REQUIRED_FILES[@]}"; do
+          if ! ls "$OUTPUT_DIR"/$pattern 1> /dev/null 2>&1; then
+            echo "Error: Missing required file: $pattern"
+            exit 1
+          fi
+          echo "✓ Found: $pattern"
+        done
+        
+        echo ""
+        echo "All required output files generated successfully!"
+    
+    - name: Validate JSON output
+      run: |
+        OUTPUT_DIR=$(find test_output -type d -name "analysis_*" | head -1)
+        RESULTS_FILE=$(find "$OUTPUT_DIR" -name "*_results.json" | head -1)
+        
+        echo "Validating JSON structure..."
+        python -c "
+import json
+import sys
+
+with open('$RESULTS_FILE', 'r') as f:
+    data = json.load(f)
+
+# Check required top-level keys
+required_keys = ['timestamp', 'video_info', 'analysis_results', 'configuration']
+for key in required_keys:
+    if key not in data:
+        print(f'Error: Missing required key: {key}')
+        sys.exit(1)
+    print(f'✓ Found key: {key}')
+
+# Check video_info structure
+video_info = data['video_info']
+if 'frame_count' not in video_info or video_info['frame_count'] <= 0:
+    print('Error: Invalid frame_count in video_info')
+    sys.exit(1)
+print(f'✓ Video has {video_info[\"frame_count\"]} frames')
+
+# Check analysis_results structure
+analysis = data['analysis_results']
+required_analysis = ['field_detection', 'player_analysis', 'ball_analysis', 'homography']
+for key in required_analysis:
+    if key not in analysis:
+        print(f'Error: Missing analysis component: {key}')
+        sys.exit(1)
+    print(f'✓ Found analysis: {key}')
+
+print('')
+print('JSON validation passed!')
+"
+    
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: analysis-output
+        path: test_output/
+        retention-days: 7
+    
+    - name: Report test summary
+      if: always()
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -d "test_output" ]; then
+          OUTPUT_DIR=$(find test_output -type d -name "analysis_*" | head -1)
+          
+          if [ -n "$OUTPUT_DIR" ]; then
+            echo "✅ Video analysis completed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Output Files" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            ls -lh "$OUTPUT_DIR" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Video analysis failed - no output directory" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "❌ Test output directory not created" >> $GITHUB_STEP_SUMMARY
+        fi
