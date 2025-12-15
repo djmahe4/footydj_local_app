@@ -24,18 +24,9 @@ This workflow automatically tests the video analysis functionality using the tes
 6. **JSON Validation** - Checks the structure of analysis results
 7. **Artifact Upload** - Saves output files as workflow artifacts
 
-### Setting Up License Key Secret
+### License Testing
 
-For the workflow to test license activation, you need to add your license key as a GitHub secret:
-
-1. Go to your repository on GitHub
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Name: `FOOTYDJ_LICENSE_KEY`
-5. Value: Your actual license key (e.g., `LIC-XXXX-YYYY-ZZZZ`)
-6. Click **Add secret**
-
-**Security Note:** The license key will be encrypted and only available to workflow runs. It won't be exposed in logs or to unauthorized users.
+The workflow includes license activation testing using securely configured credentials.
 
 ### Expected Output
 

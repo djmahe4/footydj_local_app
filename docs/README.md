@@ -4,9 +4,11 @@ Welcome to the FootyDJ Local documentation! This guide will help you understand,
 
 ## 📚 Documentation Index
 
-- **[Setup Guide](SETUP.md)** - Installation and initial configuration
+- **[Setup Guide](SETUP.md)** - Installation, configuration, and testing
 - **[User Guide](USER_GUIDE.md)** - Comprehensive usage instructions
+- **[Workflow Guide](WORKFLOW_GUIDE.md)** - Batch processing and automation
 - **[API Documentation](API.md)** - REST API reference for integration
+- **[Production Guide](../PRODUCTION.md)** - Deployment and compilation (for developers)
 
 ## 🎯 Quick Start
 

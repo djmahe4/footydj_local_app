@@ -23,32 +23,75 @@ This application includes a commercial licensing and IP protection mechanism.
     -   The application can run completely offline as long as the token is valid.
     -   It only requires an internet connection to re-activate the token once it expires.
 
-## How to Run
+## Quick Start
 
-1.  Download the models:
-    ```bash
-    python build_tools/init_models.py
-    ```
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  Run the main application script:
-    ```bash
-    python app/main.py
-    ```
+### For Users
 
-## How to Build
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   python build_tools/init_models.py
+   ```
 
-1.  (First time) Scramble the model:
-    ```bash
-    python build_tools/encrypt_model.py
-    ```
-2.  Compile the Cython modules:
-    ```bash
-    python build_tools/setup.py build_ext --inplace
-    ```
-3.  Build the executable:
-    ```bash
-    pyinstaller main.spec
-    ```
+2. **Run the application:**
+   ```bash
+   # Desktop application
+   python app/main.py
+   
+   # Or batch processing
+   python workflow.py
+   ```
+
+3. **Open in browser:**
+   Navigate to `http://127.0.0.1:8000`
+
+See the [Setup Guide](docs/SETUP.md) for detailed installation instructions.
+
+### For Developers/Production
+
+See [PRODUCTION.md](PRODUCTION.md) for:
+- Compiling code with Cython
+- Encrypting models
+- Building executables
+- Production deployment
+
+## Documentation
+
+Complete documentation is available in the `docs/` directory:
+
+- **[Setup Guide](docs/SETUP.md)** - Installation and configuration
+- **[User Guide](docs/USER_GUIDE.md)** - How to use the application
+- **[Workflow Guide](docs/WORKFLOW_GUIDE.md)** - Batch video processing
+- **[API Documentation](docs/API.md)** - REST API reference
+- **[Production Guide](PRODUCTION.md)** - Deployment and compilation
+
+## Testing
+
+The repository includes automated testing via GitHub Actions:
+- Video analysis workflow testing
+- Output validation
+- JSON structure verification
+
+See `.github/workflows/` for workflow definitions.
+
+## Features
+
+- **Field Detection**: Automatically identifies football field lines and boundaries
+- **Player Tracking**: Tracks player positions and movements across frames
+- **Ball Tracking**: Follows ball trajectory and analyzes possession
+- **Camera Calibration**: Transforms video coordinates to real-world field positions
+- **Batch Processing**: Process multiple videos automatically with `workflow.py`
+- **Web Interface**: Modern, responsive UI for easy interaction
+- **REST API**: Programmable interface for integration
+
+## System Requirements
+
+- **Python**: 3.11.x (compiled modules built for Python 3.11)
+- **OS**: Windows 10/11, macOS 10.14+, or Linux (Ubuntu 20.04+)
+- **RAM**: 8GB minimum, 16GB recommended
+- **Storage**: 5GB free space for models and output
+- **GPU**: Optional but recommended (CUDA-compatible NVIDIA GPU)
+
+## License
+
+This software requires a valid license key to operate. Contact FootyDJ for licensing information.

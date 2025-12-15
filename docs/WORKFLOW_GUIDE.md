@@ -403,6 +403,66 @@ Register-ScheduledTask -Action $action -Trigger $trigger `
     -TaskName "FootyDJ Workflow" -Description "Daily video processing"
 ```
 
+## Understanding Output Files
+
+### Annotated Video Output
+
+The workflow generates annotated videos with visual overlays showing analysis results.
+
+**Video Specifications:**
+- Same resolution and FPS as input video
+- Format: MP4 with MPEG-4 or H.264 codec
+- Size: Similar to original (slight increase due to overlays)
+
+**Visual Overlays Include:**
+
+1. **Analysis Info Panel** (top-left, semi-transparent):
+   - Field detection status and confidence
+   - Player count and team information
+   - Ball tracking status and confidence
+   - Calibration quality indicator
+
+2. **Player Detection Boxes**:
+   - Green bounding boxes around detected players
+   - Player labels (P1, P2, P3, etc.)
+   - Updates every 30 frames
+
+3. **Ball Position Marker**:
+   - Red circle marking ball position
+   - White outline for visibility
+   - Shown when ball is detected
+
+4. **Frame Counter** (bottom):
+   - Current frame / total frames
+
+**Example Output Structure:**
+```
+output/analysis_20251215_142210/
+├── video_name_annotated.mp4    # Annotated video output
+├── video_name_results.json     # Complete analysis data
+├── video_name_tracking.csv     # Frame tracking data
+└── workflow_summary.json       # Processing summary
+```
+
+### JSON Results Structure
+
+The `*_results.json` file contains:
+- **timestamp**: Analysis date/time
+- **video_info**: Resolution, FPS, frame count, duration
+- **analysis_results**: 
+  - field_detection: Lines detected, confidence
+  - player_tracking: Player counts, team info
+  - ball_tracking: Detection status, confidence
+  - homography: Calibration quality
+- **configuration**: Analysis parameters used
+
+### CSV Tracking Data
+
+The `*_tracking.csv` file provides frame-by-frame data:
+- Frame number
+- Players detected per frame
+- Ball detection status per frame
+
 ## Getting Help
 
 - See [User Guide](USER_GUIDE.md) for general usage

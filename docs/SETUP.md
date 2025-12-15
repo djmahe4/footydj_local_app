@@ -249,11 +249,52 @@ If you encounter issues not covered here:
 3. Visit the GitHub repository issues page
 4. Contact support@footydj.com
 
+## Testing the Installation
+
+### Quick Web Interface Test
+
+1. **Start the server:**
+   ```bash
+   python app/server.py
+   ```
+
+2. **Open in browser:**
+   Navigate to `http://127.0.0.1:8000`
+
+3. **Test license activation:**
+   - Enter a license key in the License section
+   - Click "Activate License"
+   - Status should change to "License Active"
+
+4. **Test video analysis:**
+   - Go to "Analyze Video" section
+   - Upload a video file (or use one from `fragments/` folder)
+   - Click "Start Analysis"
+   - Wait for results to appear
+
+### Testing via API
+
+Test the API endpoints with curl:
+
+```bash
+# Health check
+curl http://127.0.0.1:8000/api/health
+
+# License activation
+curl -X POST http://127.0.0.1:8000/api/activate \
+  -H "Content-Type: application/json" \
+  -d '{"key":"YOUR-LICENSE-KEY"}'
+
+# Video analysis
+curl -X POST http://127.0.0.1:8000/api/analyze-video \
+  -F "video_file=@path/to/video.mp4"
+```
+
 ## Next Steps
 
 - Read the [User Guide](USER_GUIDE.md) for detailed usage instructions
 - Explore the [API Documentation](API.md) for integration options
-- Check out example workflows in the repository
+- Check the [Workflow Guide](WORKFLOW_GUIDE.md) for batch processing
 
 ---
 
