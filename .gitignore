@@ -136,3 +136,7 @@ gemini.md
 
 # Encrypted models
 app/encrypted_models/
+
+# Test output directories
+output_test/
+output/

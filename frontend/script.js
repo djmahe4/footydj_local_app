@@ -37,9 +37,11 @@ async function checkServerConnection() {
             throw new Error('Server not responding');
         }
     } catch (error) {
-        console.error('Connection error:', error);
         statusIndicator.querySelector('.status-text').textContent = 'Disconnected';
-        showNotification('Unable to connect to server', 'error');
+        // Only show notification in development mode
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            showNotification('Unable to connect to server', 'warning');
+        }
     }
 }
 
@@ -56,7 +58,7 @@ async function checkLicenseStatus() {
             await loadSystemStatus();
         }
     } catch (error) {
-        console.error('Error checking license:', error);
+        // License check failed, default to inactive
         appState.isLicensed = false;
     }
 }
@@ -112,8 +114,7 @@ async function activateLicense() {
             showNotification(data.detail || 'Activation failed', 'error');
         }
     } catch (error) {
-        console.error('Activation error:', error);
-        showNotification('Failed to activate license', 'error');
+        showNotification('Failed to activate license: ' + error.message, 'error');
     } finally {
         activateBtn.disabled = false;
         activateBtn.innerHTML = `
@@ -294,7 +295,6 @@ async function startAnalysis() {
         }
     } catch (error) {
         clearInterval(progressInterval);
-        console.error('Analysis error:', error);
         showNotification('Analysis failed: ' + error.message, 'error');
         progressContainer.classList.add('hidden');
         processBtn.disabled = false;
@@ -377,7 +377,9 @@ async function loadSystemStatus() {
         document.getElementById('info-models').style.color = 
             allModelsAvailable ? 'var(--success-color)' : 'var(--warning-color)';
     } catch (error) {
-        console.error('Error loading status:', error);
+        // Status loading failed, use default values
+        document.getElementById('info-modules').textContent = 'Unknown';
+        document.getElementById('info-models').textContent = 'Unknown';
     }
 }
 
@@ -455,16 +457,36 @@ function setupEventListeners() {
 
 // Utility Functions
 function showNotification(message, type = 'info') {
-    // Simple notification system (could be enhanced with a toast library)
-    const colors = {
-        success: 'var(--success-color)',
-        error: 'var(--danger-color)',
-        warning: 'var(--warning-color)',
-        info: 'var(--primary-color)'
+    const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
     };
     
-    console.log(`[${type.toUpperCase()}] ${message}`);
-    alert(message); // Simple fallback, could use a toast library
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-content">
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 
 function downloadJSON(data, filename) {
