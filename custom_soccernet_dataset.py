@@ -37,7 +37,7 @@ class SoccerNetDataset(YOLODataset):
     dataset_dir/
         ├── train/
         │   ├── SNGS-060/
-        │   │   ├── SNGS-060.json
+        │   │   ├── Labels-GameState.json
         │   │   └── img1/
         │   │       ├── 000001.jpg
         │   │       └── ...
@@ -140,7 +140,7 @@ class SoccerNetDataset(YOLODataset):
             img_by_sequence[seq_name].append(img_file)
 
             # Store JSON file path
-            json_file = seq_dir / f"{seq_name}.json"
+            json_file = seq_dir / f"Labels-GameState.json"
             if json_file.exists():
                 json_files[seq_name] = json_file
 
@@ -438,4 +438,5 @@ class SoccerNetDataset(YOLODataset):
         save_path = Path(save_path) if save_path is not None else Path(label["im_file"]).with_suffix(".vis.jpg")
         cv2.imwrite(str(save_path), img)
         LOGGER.info(f"Wrote visualization to {save_path}")
+
         return save_path
